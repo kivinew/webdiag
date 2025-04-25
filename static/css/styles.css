@@ -1,0 +1,73 @@
+/* Общие стили для всей страницы */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+/* Основной контейнер для контента */
+.content {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Заголовок h1 */
+.content h1 {
+    color: #2c3e50;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 10px;
+    margin-top: 0;
+    font-size: 2.2em;
+}
+
+/* Навигационное меню */
+.mainmenu {
+    list-style-type: none;
+    padding: 0;
+    margin: 20px 0;
+    background-color: #2c3e50;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.mainmenu li {
+    float: left;
+}
+
+.mainmenu li a {
+    display: block;
+    color: #fff;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.mainmenu li a:hover {
+    background-color: #3498db;
+}
+
+/* Активный пункт меню (можно добавить класс .active) */
+.mainmenu li a.active {
+    background-color: #2980b9;
+    font-weight: bold;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .mainmenu li {
+        float: none;
+        width: 100%;
+    }
+    .content {
+        padding: 15px;
+        margin: 10px;
+    }
+}

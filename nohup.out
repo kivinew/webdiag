@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/home/kivinew/WEB_DIAGNOSTIC/webdiag.py", line 6, in <module>
+    menu = [{"name": "1 линия", "url": url_for('level1')},
+                                       ^^^^^^^^^^^^^^^^^
+  File "/home/kivinew/WEB_DIAGNOSTIC/.venv/lib/python3.12/site-packages/flask/helpers.py", line 232, in url_for
+    return current_app.url_for(
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/kivinew/WEB_DIAGNOSTIC/.venv/lib/python3.12/site-packages/werkzeug/local.py", line 318, in __get__
+    obj = instance._get_current_object()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/kivinew/WEB_DIAGNOSTIC/.venv/lib/python3.12/site-packages/werkzeug/local.py", line 519, in _get_current_object
+    raise RuntimeError(unbound_message) from None
+RuntimeError: Working outside of application context.
+
+This typically means that you attempted to use functionality that needed
+the current application. To solve this, set up an application context
+with app.app_context(). See the documentation for more information.
