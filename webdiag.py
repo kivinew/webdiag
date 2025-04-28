@@ -20,7 +20,7 @@ def home():
     # меню 6 пунктов
     current_menu = menu[1:7]
     return render_template("home.html", 
-                        title="Выбери уровень поддержки:", 
+                        title="Выбери уровень поддержки", 
                         menu=current_menu)
 
 @app.route("/about")
@@ -69,7 +69,7 @@ def help():
 def report():
     print(url_for("report"))
     # 6й пункт меню
-    current_menu = menu[0:1] + menu[6:]
+    current_menu = menu[0:1] + menu[4:5]
     return render_template("report.html", 
                         title="Сообщите о проблеме", 
                         menu=current_menu)
@@ -78,10 +78,11 @@ def report():
 def page_not_found(e):
     print(f"404 Error: {e}")
     # Берем только последний пункт "На главную"
-    error_menu = [menu[-1]]
+    error_menu = menu[0:1] + menu[4:6]
     return render_template("404.html", 
                         title="Страница не найдена", 
-                        menu=error_menu), 404
+                        menu=error_menu, image_path="/images/404.jpg",
+			image_alt="https://drive.google.com/file/d/1B6uMzt9MfS01u5ntQrLmS3xRNF5gWtts/view?usp=drive_link"), 404
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
