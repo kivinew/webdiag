@@ -3,5 +3,6 @@
 {% block content %}
 {{ super() }}
 
-{% endblock %}
 <img src="{{ url_for('static', filename=image_path) }}" alt="{{ image_alt }}">
+{% endblock %}
+

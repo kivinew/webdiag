@@ -1,7 +1,7 @@
-from flask import Flask, render_template, url_for
+from flask import Flask, render_template, url_for, request, flash, session, redirect
 
 app = Flask(__name__)
-
+app.config['SECRET_KEY'] = 'fwlhflsiurghhgoliuharglih4liguhaol4'
 # Меню сайта
 menu = [
     {"name": "На главную", "url": "home"},
@@ -10,7 +10,8 @@ menu = [
     {"name": "3 линия", "url": "level3"},
     {"name": "Помощь", "url": "help"},
     {"name": "Сообщить о проблеме", "url": "report"},
-    {"name": "О портале", "url": "about"}
+    {"name": "О портале", "url": "about"},
+    {"name": "Войти", "url": "login"}
 ]
 
 @app.route("/")
@@ -18,7 +19,7 @@ menu = [
 def home():
     print(url_for('home'))
     # меню 6 пунктов
-    current_menu = menu[1:7]
+    current_menu = menu[1:8]
     return render_template("home.html", 
                         title="Выбери уровень поддержки", 
                         menu=current_menu)
@@ -65,13 +66,30 @@ def help():
                         title="Помощь по порталу диагностики", 
                         menu=current_menu)
 
-@app.route("/report")
+@app.route("/report", methods=["POST", "GET"])
 def report():
+    if request.method == 'POST':
+        print(request.form)
+        if len(request.form['username']) > 4:
+            flash("Сообщение отправлено администратору")
+        else:
+            flash("Ошибка! Сообщение не отправлено!")
     print(url_for("report"))
     # 6й пункт меню
     current_menu = menu[0:1] + menu[4:5]
     return render_template("report.html", 
                         title="Сообщите о проблеме", 
+                        menu=current_menu)
+
+@app.route("/login", methods=["POST", "GET"])
+def login():
+    if 'userLogged' in session:
+        return redirect(url_for('profile', username=session['userLogged']))
+    elif request.method == 'POST' and request.form['username'] == "kivinew" and request.form['psw'] == "11223344":
+        session['userLogged'] = request.form['username']
+        return redirect(url_for('profile', username=session['userLogged']))
+    current_menu = menu[0:1] + menu[5:7]
+    return render_template("login.html", title="Авторизация на сайте", 
                         menu=current_menu)
 
 @app.errorhandler(404)
@@ -82,7 +100,7 @@ def page_not_found(e):
     return render_template("404.html", 
                         title="Страница не найдена", 
                         menu=error_menu, image_path="/images/404.jpg",
-			image_alt="https://drive.google.com/file/d/1B6uMzt9MfS01u5ntQrLmS3xRNF5gWtts/view?usp=drive_link"), 404
+			image_alt="https://drive.google.com/file/d/1B6uMzt9MfS01u5ntQrLmS3xRNF5gWtts/view?usp=sharing"), 404
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)

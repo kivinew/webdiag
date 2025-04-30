@@ -71,3 +71,146 @@ body {
         margin: 10px;
     }
 }
+
+/* Форма обратной связи */
+/* Стили для flash-сообщений */
+.flash {
+    padding: 10px 15px;
+    margin: 10px 0;
+    background: #ffebee;
+    border: 1px solid #ef9a9a;
+    border-radius: 3px;
+    color: #c62828;
+}
+
+/* Основные стили формы */
+.form-report {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.form-report p {
+    margin-bottom: 15px;
+}
+
+.form-report label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-report input[type="text"],
+.form-report textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-report textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-report input[type="submit"] {
+    background: #1976d2;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.form-report input[type="submit"]:hover {
+    background: #1565c0;
+}
+
+/* Валидация полей */
+.form-report input:required:invalid,
+.form-report textarea:required:invalid {
+    border-left: 3px solid #e53935;
+}
+
+.form-report input:required:valid,
+.form-report textarea:required:valid {
+    border-left: 3px solid #43a047;
+}
+
+/* Форма авторизации */
+/* Основные стили формы */
+.form-contact {
+    max-width: 400px;
+    margin: 30px auto;
+    padding: 25px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Стили для строк формы */
+.form-contact p {
+    margin-bottom: 20px;
+}
+
+/* Стили меток */
+.form-contact label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #333;
+    font-size: 15px;
+}
+
+/* Стили полей ввода */
+.form-contact input[type="text"],
+.form-contact input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 15px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.form-contact input[type="text"]:focus,
+.form-contact input[type="password"]:focus {
+    border-color: #4285f4;
+    outline: none;
+}
+
+/* Стиль кнопки */
+.form-contact input[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.form-contact input[type="submit"]:hover {
+    background: #3367d6;
+}
+
+/* Валидация полей */
+.form-contact input:required:invalid {
+    border-left: 3px solid #ea4335;
+}
+
+.form-contact input:required:valid {
+    border-left: 3px solid #34a853;
+}
