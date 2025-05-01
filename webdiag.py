@@ -81,7 +81,7 @@ def level3():
 @app.route("/help")
 def help():
     print(url_for("help"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("help.html", title="Помощь", 
                         menu=current_menu)
 
