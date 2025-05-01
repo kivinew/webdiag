@@ -1,0 +1,14 @@
+# Игнорировать папку venv (Python)
+.venv/
+venv/
+
+# Игнорировать файлы .log
+*.log
+
+# Игнорировать папку node_modules (JavaScript)
+node_modules/
+
+# Игнорировать системные файлы
+.DS_Store
+
+
