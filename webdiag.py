@@ -42,19 +42,19 @@ def home():
 @app.route("/level1")
 def level1():
     print(url_for("level1"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("level1.html", title="1 линия", menu=current_menu, contentmenu=level1menu)
 
 @app.route("/level2")
 def level2():
     print(url_for("level2"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("level2.html", title="2 линия", menu=current_menu, contentmenu=level2menu)
     
 @app.route("/l2/diagnostics")
 def diagnostics():
     print(url_for("diagnostics"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     level2menu
     return render_template("l2/diagnostics.html", title="Диагностика сети", 
                         menu=current_menu, contentmenu=level2menu)
@@ -62,20 +62,20 @@ def diagnostics():
 @app.route("/l2/configuration")
 def configuration():
     print(url_for("configuration"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("l2/configuration.html", title="Настройка оборудования", 
                            menu=current_menu, contentmenu=level2menu)
 
 @app.route("/l2/remote")
 def remote():
     print(url_for("remote"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("l2/remote.html", title="Удалённая помощь", menu=current_menu)
     
 @app.route("/level3")
 def level3():
     print(url_for("level3"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("level3.html", title="3 линия", menu=current_menu)
 
 @app.route("/help")
@@ -94,14 +94,14 @@ def report():
         else:
             flash("Ошибка! Сообщение не отправлено!")
     print(url_for("report"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("report.html", title="Сообщите о проблеме", 
                         menu=current_menu)
 
 @app.route("/about")
 def about():
     print(url_for("about"))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("about.html", 
                         title="Информация о портале", menu=current_menu)
 
@@ -117,7 +117,7 @@ def login():
         if username == "kivinew" and password == "11223344":
             session['userLogged'] = username
             return redirect(url_for('profile', username=username))
-    current_menu = menu[1:8]
+    current_menu = menu[0:8]
     return render_template("login.html", title="Авторизация на сайте", menu=current_menu)
 
 @app.errorhandler(404)
