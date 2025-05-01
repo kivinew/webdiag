@@ -3,6 +3,5 @@
 {% block content %}
 {{ super() }}
 
-<img src="{{ url_for('static', filename=image_path) }}" alt="{{ image_alt }}">
+<img src="{{ url_for('static', filename=image_path) }}" alt="{{ image_alt }}" class="error-image">
 {% endblock %}
-

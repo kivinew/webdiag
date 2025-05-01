@@ -8,7 +8,7 @@
     <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 </head>
 <body>
-    <div class="content">
+    <div class="content bg_portal">
         <header>
             <h1>{{ title if title else 'Портал техподдержки' }}</h1>
             
@@ -28,10 +28,20 @@
             {% endblock %}
         </header>
 
+        {% if request.endpoint and request.endpoint not in ['home', 'index'] %}
+        <div class="back-button">
+            <a href="javascript:history.back()" class="btn-back">← Назад</a>
+        </div>
+        {% endif %}
+        
         <main class="container">
-            {% block content %}{% endblock %}
+            <div class="main-content">
+                <div class="main-section">
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
         </main>
-
+        
         <footer class="footer">
             <p>© 2025 ТП КЭС</p>
         </footer>
