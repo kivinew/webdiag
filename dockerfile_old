@@ -1,9 +1,0 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
-ADD . /app
-WORKDIR /app
-COPY . .
-ENV PATH="/root/.local/bin:${PATH}"
-RUN apt-get update && apt-get install -y curl
-RUN curl -sSL https://astral.sh/uv/install.sh | sh && \  
-    uv add --requirements requirements.txt
-EXPOSE 5000
