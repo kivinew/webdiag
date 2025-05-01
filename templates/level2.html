@@ -2,5 +2,11 @@
 
 {% block content %}
 {{ super() }}
-<ul><li>
+<div class="features">
+    <ul>
+        <div class="feature"><li><a href="{{ url_for('diagnostics') }}">Диагностика сети</a></li></div>
+        <div class="feature"><li><a href="{{ url_for('configuration') }}">Настройка оборудования</a></li></div>
+        <div class="feature"><li><a href="{{ url_for('remote') }}">Удалённая помощь</a></li></div>
+    </ul>
+</div>
 {% endblock %}

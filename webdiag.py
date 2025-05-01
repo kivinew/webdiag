@@ -1,106 +1,131 @@
+# TODO:
+#  
+
 from flask import Flask, render_template, url_for, request, flash, session, redirect
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'fwlhflsiurghhgoliuharglih4liguhaol4'
+
 # Меню сайта
 menu = [
-    {"name": "На главную", "url": "home"},
-    {"name": "1 линия", "url": "level1"},
-    {"name": "2 линия", "url": "level2"},
-    {"name": "3 линия", "url": "level3"},
-    {"name": "Помощь", "url": "help"},
-    {"name": "Сообщить о проблеме", "url": "report"},
-    {"name": "О портале", "url": "about"},
-    {"name": "Войти", "url": "login"}
+    {"name": "На главную", "url": "/home"},
+    {"name": "1 линия", "url": "/level1"},
+    {"name": "2 линия", "url": "/level2"},
+    {"name": "3 линия", "url": "/level3"},
+    {"name": "Войти", "url": "/login"},
+    {"name": "Помощь", "url": "/help"},
+    {"name": "Сообщить о проблеме", "url": "/report"},
+    {"name": "О портале", "url": "/about"},
 ]
+
+# Меню диагностики 1 линии
+level1menu = []
+
+# Меню диагностики 2 линии
+level2menu = [
+    {"name": "Диагностика", "url": "/l2/diagnostics"},
+    {"name": "Настройка", "url": "/l2/configuration"},
+    {"name": "Удалённая помощь", "url": "/l2/remote"}
+]
+
+# Меню диагностики 3 линии
+level3menu = []
 
 @app.route("/")
 @app.route("/home")
 def home():
     print(url_for('home'))
-    # меню 6 пунктов
     current_menu = menu[1:8]
     return render_template("home.html", 
-                        title="Выбери уровень поддержки", 
-                        menu=current_menu)
-
-@app.route("/about")
-def about():
-    print(url_for("about"))
-    # 
-    current_menu = menu[0:1] + menu[4:6]
-    return render_template("about.html", 
-                        title="Информация о портале", 
-                        menu=current_menu)
+                        title="Выбери уровень поддержки", menu=current_menu)
+    
 @app.route("/level1")
 def level1():
     print(url_for("level1"))
-    # Берем с 4го по 6й пункт
-    current_menu = menu[1:7]
-    return render_template("level1.html", 
-                        title="1 линия", 
-                        menu=current_menu)
+    current_menu = menu[1:8]
+    return render_template("level1.html", title="1 линия", menu=current_menu, contentmenu=level1menu)
+
 @app.route("/level2")
 def level2():
     print(url_for("level2"))
-    # 
-    current_menu = menu[1:7]
-    return render_template("level2.html", 
-                        title="2 линия", 
-                        menu=current_menu)
+    current_menu = menu[1:8]
+    return render_template("level2.html", title="2 линия", menu=current_menu, contentmenu=level2menu)
+    
+@app.route("/l2/diagnostics")
+def diagnostics():
+    print(url_for("diagnostics"))
+    current_menu = menu[1:8]
+    level2menu
+    return render_template("l2/diagnostics.html", title="Диагностика сети", 
+                        menu=current_menu, contentmenu=level2menu)
+
+@app.route("/l2/configuration")
+def configuration():
+    print(url_for("configuration"))
+    current_menu = menu[1:8]
+    return render_template("l2/configuration.html", title="Настройка оборудования", 
+                           menu=current_menu, contentmenu=level2menu)
+
+@app.route("/l2/remote")
+def remote():
+    print(url_for("remote"))
+    current_menu = menu[1:8]
+    return render_template("l2/remote.html", title="Удалённая помощь", menu=current_menu)
+    
 @app.route("/level3")
 def level3():
     print(url_for("level3"))
-    # Берем с 4го по 6й пункт
-    current_menu = menu[1:7]
-    return render_template("level3.html", 
-                        title="3 линия", 
-                        menu=current_menu)
+    current_menu = menu[1:8]
+    return render_template("level3.html", title="3 линия", menu=current_menu)
 
 @app.route("/help")
 def help():
     print(url_for("help"))
-    # Берем с 4го по 6й пункт
-    current_menu = menu[0:1] + menu[5:6]
-    return render_template("help.html", 
-                        title="Помощь по порталу диагностики", 
+    current_menu = menu[1:8]
+    return render_template("help.html", title="Помощь", 
                         menu=current_menu)
 
 @app.route("/report", methods=["POST", "GET"])
 def report():
     if request.method == 'POST':
         print(request.form)
-        if len(request.form['username']) > 4:
+        if len(request.form.get('username', '')) > 4:
             flash("Сообщение отправлено администратору")
         else:
             flash("Ошибка! Сообщение не отправлено!")
     print(url_for("report"))
-    # 6й пункт меню
-    current_menu = menu[0:1] + menu[4:5]
-    return render_template("report.html", 
-                        title="Сообщите о проблеме", 
+    current_menu = menu[1:8]
+    return render_template("report.html", title="Сообщите о проблеме", 
                         menu=current_menu)
+
+@app.route("/about")
+def about():
+    print(url_for("about"))
+    current_menu = menu[1:8]
+    return render_template("about.html", 
+                        title="Информация о портале", menu=current_menu)
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
     if 'userLogged' in session:
         return redirect(url_for('profile', username=session['userLogged']))
-    elif request.method == 'POST' and request.form['username'] == "kivinew" and request.form['psw'] == "11223344":
-        session['userLogged'] = request.form['username']
-        return redirect(url_for('profile', username=session['userLogged']))
-    current_menu = menu[0:1] + menu[5:7]
-    return render_template("login.html", title="Авторизация на сайте", 
-                        menu=current_menu)
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('psw')
+        
+        if username == "kivinew" and password == "11223344":
+            session['userLogged'] = username
+            return redirect(url_for('profile', username=username))
+    current_menu = menu[1:8]
+    return render_template("login.html", title="Авторизация на сайте", menu=current_menu)
 
 @app.errorhandler(404)
 def page_not_found(e):
     print(f"404 Error: {e}")
-    # Берем только последний пункт "На главную"
     error_menu = menu[0:1] + menu[4:6]
-    return render_template("404.html", 
-                        title="Страница не найдена", 
-                        menu=error_menu, image_path="/images/404.jpg",
-			image_alt="https://drive.google.com/file/d/1B6uMzt9MfS01u5ntQrLmS3xRNF5gWtts/view?usp=sharing"), 404
+    return render_template("404.html", title="Страница не найдена",
+        menu=error_menu, image_path="/images/404.jpg", image_alt="Страница не найдена"), 404
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
