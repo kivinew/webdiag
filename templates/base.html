@@ -6,6 +6,7 @@
     <title>Портал техподдержки{% if title %} - {{ title }}{% endif %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='images/favicon.png') }}" type="image/png">
+    {% block styles %}{% endblock %}  <!-- Блок для дополнительных стилей -->
 </head>
 <body>
     <div class="content bg_portal">

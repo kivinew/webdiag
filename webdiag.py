@@ -19,11 +19,15 @@ menu = [
 ]
 
 # Меню диагностики 1 линии
-level1menu = []
+level1menu = [
+    {"name": "Диагностика терминала", "url": "/l1/diagnostics"},
+    {"name": "Проверка связи", "url": "/l1/ping-test"},
+    {"name": "Перезагрузка терминала", "url": "/l1/reboot"},
+    ]
 
 # Меню диагностики 2 линии
 level2menu = [
-    {"name": "Диагностика", "url": "/l2/diagnostics"},
+    {"name": "Диагностика 2 линия", "url": "/l2/diagnostics"},
     {"name": "Настройка", "url": "/l2/configuration"},
     {"name": "Удалённая помощь", "url": "/l2/remote"}
 ]
@@ -39,12 +43,38 @@ def home():
     return render_template("home.html", 
                         title="Выбери уровень поддержки", menu=current_menu)
     
+# маршруты для 1 линии
 @app.route("/level1")
 def level1():
     print(url_for("level1"))
     current_menu = menu[0:8]
     return render_template("level1.html", title="1 линия", menu=current_menu, contentmenu=level1menu)
 
+@app.route("/l1/diagnostics")
+def l1_diagnostics():
+    current_menu = menu[0:8]
+    return render_template("l1/diagnostics.html", 
+                         title="Диагностика терминала",
+                         menu=current_menu,
+                         contentmenu=level1menu)
+
+@app.route("/l1/ping-test")
+def l1_ping_test():
+    current_menu = menu[0:8]
+    return render_template("l1/ping_test.html", 
+                         title="Проверка связи",
+                         menu=current_menu,
+                         contentmenu=level1menu)
+
+@app.route("/l1/reboot")
+def l1_reboot():
+    current_menu = menu[0:8]
+    return render_template("l1/reboot.html", 
+                         title="Перезагрузка терминала",
+                         menu=current_menu,
+                         contentmenu=level1menu)
+
+# маршруты для 2 линии
 @app.route("/level2")
 def level2():
     print(url_for("level2"))

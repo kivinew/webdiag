@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="diagnostic-form">
+    <h2>Диагностика терминала (1 линия)</h2>
+    <!-- Форма для ввода данных -->
+    <form method="POST">
+        <input type="text" name="serial" placeholder="Серийный номер">
+        <button type="submit">Проверить</button>
+    </form>
+    
+    <!-- Результаты диагностики -->
+    {% if result %}
+    <div class="diagnostic-result">
+        <h3>Результаты:</h3>
+        <p>Статус: {{ result.status }}</p>
+        <p>Модель: {{ result.model }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
