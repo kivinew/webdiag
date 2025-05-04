@@ -1,6 +1,38 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/levels.css') }}">
+{% endblock %}
+
 {% block content %}
 {{ super() }}
 
+<div class="diagnostic-form">
+    <h2>Диагностика терминала</h2>
+    <form id="terminalForm">
+        <div class="form-group">
+            <label for="serialNumber">Серийный номер:</label>
+            <input type="text" id="serialNumber" name="serialNumber" 
+                   placeholder="формат '4857544312345678'" required>
+            <button type="submit" class="btn-check">Проверить</button>
+        </div>
+    </form>
+
+    <div class="result-container" id="resultContainer" style="display: none;">
+        <h3>Результаты диагностики:</h3>
+        <div class="result-field">
+            <span class="field-label">Серийный номер:</span>
+            <span id="resultSerial" class="field-value"></span>
+        </div>
+        <div class="result-field">
+            <span class="field-label">Описание:</span>
+            <span id="resultDescription" class="field-value"></span>
+        </div>
+        <div class="result-field">
+            <span class="field-label">ONT статус:</span>
+            <span id="resultOnt" class="field-value"></span>
+        </div>
+    </div>
+</div>
 {% endblock %}

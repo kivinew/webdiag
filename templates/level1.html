@@ -2,5 +2,9 @@
 
 {% block content %}
 {{ super() }}
-
+<div class="features">
+    <ul>
+        <div class="feature"><li><a href="{{ url_for('diagnostics') }}">Диагностика сети</a></li></div>
+    </ul>
+</div>
 {% endblock %}

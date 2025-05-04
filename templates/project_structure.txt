@@ -1,0 +1,12 @@
+your_app/
+├── static/
+|   ├── images/
+│   ├── css/
+│   │   ├── styles.css      # Общие стили
+│   │   └── levels.css      # Стили для диагностики
+│   └── js/
+└── templates/
+    └── l2/
+        ├── diagnostics.html
+        ├── configuration.html
+        └── remote.html
