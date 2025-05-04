@@ -158,4 +158,4 @@ def page_not_found(e):
         menu=error_menu, image_path="/images/404.jpg", image_alt="Страница не найдена"), 404
 
 if __name__ == "__main__":
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='10.2.18.100', port=5000, debug=True)
