@@ -20,16 +20,16 @@ menu = [
 
 # Меню диагностики 1 линии
 level1menu = [
-    {"name": "Диагностика терминала", "url": "/l1/diagnostics"},
-    {"name": "Проверка связи", "url": "/l1/ping-test"},
-    {"name": "Перезагрузка терминала", "url": "/l1/reboot"},
+    {"name": "Диагностика терминала", "url": "l1_diagnostics"},
+    {"name": "Проверка связи", "url": "ping-test"},
+    {"name": "Перезагрузка терминала", "url": "reboot"},
     ]
 
 # Меню диагностики 2 линии
 level2menu = [
-    {"name": "Диагностика 2 линия", "url": "/l2/diagnostics"},
-    {"name": "Настройка", "url": "/l2/configuration"},
-    {"name": "Удалённая помощь", "url": "/l2/remote"}
+    {"name": "Диагностика 2 линия", "url": "l2_diagnostics"},
+    {"name": "Настройка", "url": "configuration"},
+    {"name": "Удалённая помощь", "url": "remote"}
 ]
 
 # Меню диагностики 3 линии
@@ -40,8 +40,7 @@ level3menu = []
 def home():
     print(url_for('home'))
     current_menu = menu[1:8]
-    return render_template("home.html", 
-                        title="Выбери уровень поддержки", menu=current_menu)
+    return render_template("home.html", title="Выбери уровень поддержки", menu=current_menu)
     
 # маршруты для 1 линии
 @app.route("/level1")
@@ -79,22 +78,29 @@ def l1_reboot():
 def level2():
     print(url_for("level2"))
     current_menu = menu[0:8]
-    return render_template("level2.html", title="2 линия", menu=current_menu, contentmenu=level2menu)
+    return render_template("level2.html", 
+                           title="2 линия", 
+                           menu=current_menu, 
+                           contentmenu=level2menu)
     
 @app.route("/l2/diagnostics")
 def diagnostics():
     print(url_for("diagnostics"))
     current_menu = menu[0:8]
     level2menu
-    return render_template("l2/diagnostics.html", title="Диагностика сети", 
-                        menu=current_menu, contentmenu=level2menu)
+    return render_template("l2/diagnostics.html", 
+                           title="Диагностика сети",
+                           menu=current_menu, 
+                           contentmenu=level2menu)
 
 @app.route("/l2/configuration")
 def configuration():
     print(url_for("configuration"))
     current_menu = menu[0:8]
-    return render_template("l2/configuration.html", title="Настройка оборудования", 
-                           menu=current_menu, contentmenu=level2menu)
+    return render_template("l2/configuration.html", 
+                           title="Настройка оборудования", 
+                           menu=current_menu, 
+                           contentmenu=level2menu)
 
 @app.route("/l2/remote")
 def remote():
@@ -112,8 +118,7 @@ def level3():
 def help():
     print(url_for("help"))
     current_menu = menu[0:8]
-    return render_template("help.html", title="Помощь", 
-                        menu=current_menu)
+    return render_template("help.html", title="Помощь", menu=current_menu)
 
 @app.route("/report", methods=["POST", "GET"])
 def report():
