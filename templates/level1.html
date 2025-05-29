@@ -1,10 +1,74 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+{{ super() }}
+<style>
+    .diagnostics {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 30px;
+    }
+    
+    .feature {
+        flex: 1;
+        min-width: 0;
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .feature:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .feature a {
+        display: block;
+        color: #2c3e50;
+        text-decoration: none;
+        font-size: 18px;
+        font-weight: 500;
+        padding: 15px 0;
+    }
+    
+    .feature a:hover {
+        color: #3498db;
+    }
+    
+    @media (max-width: 768px) {
+        .diagnostics {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {{ super() }}
-<div class="features">
-    <ul>
-        <div class="feature"><li><a href="{{ url_for('diagnostics') }}">Диагностика сети</a></li></div>
-    </ul>
+<div class="diagnostics">
+    <div class="feature">
+        <a href="{{ url_for('l1_diagnostics') }}">
+            <h3>Диагностика сети</h3>
+            <p>Проверка состояния оборудования и соединения</p>
+        </a>
+    </div>
+    
+    <div class="feature">
+        <a href="{{ url_for('ping_test') }}">
+            <h3>Настройка оборудования</h3>
+            <p>Конфигурация параметров терминалов</p>
+        </a>
+    </div>
+    
+    <div class="feature">
+        <a href="{{ url_for('reboot') }}">
+            <h3>Удалённая помощь</h3>
+            <p>Подключение специалиста для диагностики</p>
+        </a>
+    </div>
 </div>
 {% endblock %}

@@ -3,7 +3,7 @@
 {% block styles %}
 {{ super() }}
 <style>
-    .diagnostic {
+    .diagnostics {
         display: flex;
         justify-content: space-between;
         gap: 20px;
@@ -40,7 +40,7 @@
     }
     
     @media (max-width: 768px) {
-        .diagnostic {
+        .diagnostics {
             flex-direction: column;
         }
     }
@@ -49,9 +49,9 @@
 
 {% block content %}
 {{ super() }}
-<div class="diagnostic">
+<div class="diagnostics">
     <div class="feature">
-        <a href="{{ url_for('diagnostics') }}">
+        <a href="{{ url_for('l2_diagnostics') }}">
             <h3>Диагностика сети</h3>
             <p>Проверка состояния оборудования и соединения</p>
         </a>
