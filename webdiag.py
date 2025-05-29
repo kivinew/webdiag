@@ -20,20 +20,24 @@ menu = [
 
 # Меню диагностики 1 линии
 level1menu = [
-    {"name": "Диагностика терминала", "url": "l1_diagnostics"},
-    {"name": "Проверка связи", "url": "ping-test"},
-    {"name": "Перезагрузка терминала", "url": "reboot"},
+    {"name": "Диагностика терминала", "url": "/level1/diagnostics"},
+    {"name": "Проверка связи", "url": "/level1/pingtest"},
+    {"name": "Перезагрузка терминала", "url": "/level1/reboot"},
     ]
 
 # Меню диагностики 2 линии
 level2menu = [
-    {"name": "Диагностика 2 линия", "url": "l2_diagnostics"},
-    {"name": "Настройка", "url": "configuration"},
-    {"name": "Удалённая помощь", "url": "remote"}
+    {"name": "Диагностика 2 линия", "url": "/level2/diagnostics"},
+    {"name": "Настройка", "url": "/level2/configuration"},
+    {"name": "Удалённая помощь", "url": "/level2/remote"}
 ]
 
 # Меню диагностики 3 линии
-level3menu = []
+level3menu = [
+    {
+        ''''''
+    }
+]
 
 @app.route("/")
 @app.route("/home")
@@ -45,30 +49,30 @@ def home():
 # маршруты для 1 линии
 @app.route("/level1")
 def level1():
-    print(url_for("level1"))
+    # print(url_for("level1"))
     current_menu = menu[0:8]
     return render_template("level1.html", title="1 линия", menu=current_menu, contentmenu=level1menu)
 
-@app.route("/l1/diagnostics")
+@app.route("/level1/diagnostics")
 def l1_diagnostics():
     current_menu = menu[0:8]
-    return render_template("l1/diagnostics.html", 
+    return render_template("level1/l1_diagnostics.html", 
                          title="Диагностика терминала",
                          menu=current_menu,
                          contentmenu=level1menu)
 
-@app.route("/l1/ping-test")
-def l1_ping_test():
+@app.route("/level1/pingtest")
+def l1_pingtest():
     current_menu = menu[0:8]
-    return render_template("l1/ping_test.html", 
+    return render_template("level1/l1_pingtest.html", 
                          title="Проверка связи",
                          menu=current_menu,
                          contentmenu=level1menu)
 
-@app.route("/l1/reboot")
+@app.route("/level1/reboot")
 def l1_reboot():
     current_menu = menu[0:8]
-    return render_template("l1/reboot.html", 
+    return render_template("level1/l1_reboot.html", 
                          title="Перезагрузка терминала",
                          menu=current_menu,
                          contentmenu=level1menu)
@@ -76,47 +80,47 @@ def l1_reboot():
 # маршруты для 2 линии
 @app.route("/level2")
 def level2():
-    print(url_for("level2"))
+    # print(url_for("level2"))
     current_menu = menu[0:8]
     return render_template("level2.html", 
                            title="2 линия", 
                            menu=current_menu, 
                            contentmenu=level2menu)
     
-@app.route("/l2/diagnostics")
-def diagnostics():
-    print(url_for("diagnostics"))
+@app.route("/level2/diagnostics")
+def l2_diagnostics():
+    # print(url_for("l2_diagnostics"))
     current_menu = menu[0:8]
     level2menu
-    return render_template("l2/diagnostics.html", 
+    return render_template("level2/l2_diagnostics.html", 
                            title="Диагностика сети",
                            menu=current_menu, 
                            contentmenu=level2menu)
 
-@app.route("/l2/configuration")
+@app.route("/level2/configuration")
 def configuration():
-    print(url_for("configuration"))
+    # print(url_for("configuration"))
     current_menu = menu[0:8]
-    return render_template("l2/configuration.html", 
+    return render_template("level2/l2_configuration.html", 
                            title="Настройка оборудования", 
                            menu=current_menu, 
                            contentmenu=level2menu)
 
-@app.route("/l2/remote")
+@app.route("/level2/remote")
 def remote():
-    print(url_for("remote"))
+    # print(url_for("remote"))
     current_menu = menu[0:8]
-    return render_template("l2/remote.html", title="Удалённая помощь", menu=current_menu)
+    return render_template("level2/l2_remote.html", title="Удалённая помощь", menu=current_menu)
     
 @app.route("/level3")
 def level3():
-    print(url_for("level3"))
+    # print(url_for("level3"))
     current_menu = menu[0:8]
     return render_template("level3.html", title="3 линия", menu=current_menu)
 
 @app.route("/help")
 def help():
-    print(url_for("help"))
+    # print(url_for("help"))
     current_menu = menu[0:8]
     return render_template("help.html", title="Помощь", menu=current_menu)
 
@@ -135,7 +139,7 @@ def report():
 
 @app.route("/about")
 def about():
-    print(url_for("about"))
+    # print(url_for("about"))
     current_menu = menu[0:8]
     return render_template("about.html", 
                         title="Информация о портале", menu=current_menu)
@@ -163,4 +167,4 @@ def page_not_found(e):
         menu=error_menu, image_path="/images/404.jpg", image_alt="Страница не найдена"), 404
 
 if __name__ == "__main__":
-    app.run(host='10.2.18.100', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
