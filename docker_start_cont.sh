@@ -1,3 +1,3 @@
 #!/bin/bash
 #  Запуск существующего контейнера
-docker start webdiag_cont
+sudo docker start webdiag_cont
