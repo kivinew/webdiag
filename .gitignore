@@ -2,4 +2,7 @@ venv/
 .venv/
 __pycache__/
 nohup.out
-WD_server.log
+WD_server.log.ssh/
+.gitconfig
+.viminfo
+.lesshst

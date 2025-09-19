@@ -1,1 +1,1 @@
-uv run /home/kivinew/WEB_DIAGNOSTIC/webdiag.py #> WD_server.log
+uv run /home/kivinew/webdiag/webdiag.py #> WD_server.log
