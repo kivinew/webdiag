@@ -14,11 +14,11 @@
         <div class="form-group">
             <label for="serialNumber">Серийный номер:</label>
             <input type="text" id="serialNumber" name="serialNumber" 
-                   placeholder="формат '4857544312345678'" required>
-            <button type="submit" class="btn-check">Проверить</button>
+                placeholder="формат '4857544312345678'" required
+                pattern="[A-Za-z0-9]{8,16}" title="8-16 символов (буквы и цифры)">
+            <button type="button" class="btn-check" onclick="runDiagnostics()">Выполнить диагностику</button>
         </div>
     </form>
-
     <div class="result-container" id="resultContainer" style="display: none;">
         <h3>Результаты диагностики:</h3>
         <div class="result-field">
@@ -35,4 +35,13 @@
         </div>
     </div>
 </div>
+
+{% block scripts %}
+<script>
+function runDiagnostics() {
+    // ваш код JavaScript
+}
+</script>
+{% endblock %}
+
 {% endblock %}

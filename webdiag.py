@@ -1,6 +1,8 @@
 # TODO:
 # 
 
+import paramiko
+import json
 from flask import Flask, render_template, url_for, request, flash, session, redirect
 
 app = Flask(__name__)
@@ -38,6 +40,51 @@ level3menu = [
         ''''''
     }
 ]
+
+@app.route('/api/ont/diagnostics', methods=['POST'])
+def ont_diagnostics():
+    try:
+        data = request.get_json()
+        serial_number = data.get('serial', '').strip()
+        
+        # Валидация на сервере
+        if not serial_number or not re.match(r'^[A-Za-z0-9]{8,16}$', serial_number):
+            return jsonify({'status': 'error', 'error': 'Invalid serial number format'})
+        
+        # Выполнение команды на оборудовании
+        result = execute_remote_command(
+            host='172.16.17.232',
+            command=f'display ont info by-sn {serial_number}'
+        )
+        
+        return jsonify({
+            'status': 'success',
+            'serial': serial_number,
+            'result': result
+        })
+        
+    except Exception as e:
+        return jsonify({'status': 'error', 'error': str(e)})
+
+def execute_remote_command(host, command, username='admin', password='your_password'):
+    """Выполнение команды на удаленном оборудовании через SSH"""
+    client = paramiko.SSHClient()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    try:
+        client.connect(host, username=username, password=password, timeout=10)
+        
+        stdin, stdout, stderr = client.exec_command(command)
+        result = stdout.read().decode('utf-8')
+        error = stderr.read().decode('utf-8')
+        
+        if error:
+            raise Exception(f"SSH error: {error}")
+            
+        return result
+        
+    finally:
+        client.close()
 
 @app.route("/")
 @app.route("/home")
@@ -165,6 +212,13 @@ def page_not_found(e):
     error_menu = menu[0:1] + menu[4:6]
     return render_template("404.html", title="Страница не найдена",
         menu=error_menu, image_path="/images/404.jpg", image_alt="Страница не найдена"), 404
+    
+@app.route('/api/execute-command', methods=['POST'])
+def execute_command():
+    data = request.json
+    serial = data['serial']
+    result = execute_olt_command(f'display ont info by-sn {serial}')
+    return jsonify({'result': result})
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=3000, debug=True)
