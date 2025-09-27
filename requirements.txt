@@ -1,3 +1,4 @@
 flask 
 gunicorn 
-
+telnetlib3
+paramiko
