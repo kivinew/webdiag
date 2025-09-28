@@ -2,8 +2,8 @@ venv/
 .venv/
 .vscode/
 __pycache__/
-nohup.out
 WD_server.log.ssh/
+nohup.out
 .gitconfig
 .viminfo
 .lesshst
