@@ -1,6 +1,7 @@
 # TODO:
 #
 
+import os
 import re
 import paramiko
 from flask import (
@@ -13,6 +14,9 @@ from flask import (
     redirect,
     jsonify,
 )
+
+USERNAME = os.environ["USERNAME"]
+PASSWORD = os.environ["PASSWORD"]
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "fwlhflsiurghhgoliuharglih4liguhaol4"
@@ -47,7 +51,7 @@ level2menu = [
 level3menu = [{""""""}]
 
 
-def execute_remote_command(host, command, username="admin", password="your_password"):
+def execute_remote_command(host, command, username=USERNAME, password=PASSWORD):
     """Выполнение команды на удаленном оборудовании через SSH"""
     client = paramiko.SSHClient()
     client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
