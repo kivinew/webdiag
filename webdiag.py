@@ -1,6 +1,9 @@
 # TODO:
 #
 
+from dotenv import load_dotenv
+import subprocess
+import sys
 import os
 import re
 import paramiko
@@ -15,10 +18,13 @@ from flask import (
     jsonify,
 )
 
-USERNAME = os.environ["USERNAME"]
-PASSWORD = os.environ["PASSWORD"]
+load_dotenv()
+USERNAME = os.getenv("USERNAME")
+PASSWORD = os.getenv("PASSWORD")
 
 app = Flask(__name__)
+app.json.ensure_ascii = False  # не экранировать кириллицу как \uXXXX
+app.json.mimetype = "application/json; charset=utf-8"
 app.config["SECRET_KEY"] = "fwlhflsiurghhgoliuharglih4liguhaol4"
 
 # Меню сайта
@@ -50,47 +56,45 @@ level2menu = [
 # Меню диагностики 3 линии
 level3menu = [{""""""}]
 
+HOST_RE = re.compile(r'^[A-Za-z0-9.-]{1,253}$')
 
-def execute_remote_command(host, command, username=USERNAME, password=PASSWORD):
-    """Выполнение команды на удаленном оборудовании через SSH"""
-    client = paramiko.SSHClient()
-    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+def build_ping_cmd(host: str):
+    if os.name == 'nt':
+        # Windows: -n (count), -w (timeout ms)
+        return ['ping', '-n', '4', '-w', '1000', host]
+    else:
+        # Linux/macOS: -c (count), -W (timeout s on Linux; macOS использует -W в секундах для "ttl expired", -t/-W отличаются между платформами)
+        # Для простой совместимости используем -c и -W=1; при необходимости адаптируйте под конкретную ОС.
+        return ['ping', '-c', '4', '-W', '1', host]
+
+@app.post('/api/ping')
+def api_ping():
+    data = request.get_json(silent=True) or {}
+    host = (data.get('host') or '').strip()
+    if not host or not HOST_RE.match(host):
+        return {'error': 'Некорректный хост'}, 400
+
     try:
-        client.connect(host, username=username, password=password, timeout=10)
-        stdin, stdout, stderr = client.exec_command(command)
-        result = stdout.read().decode("utf-8")
-        error = stderr.read().decode("utf-8")
-        if error:
-            raise Exception(f"SSH error: {error}")
-        return result
-    finally:
-        client.close()
-
-
-@app.route("/api/execute-command", methods=["POST"])
-def execute_command():
-    data = request.json
-    serial = data["serial"]
-    result = execute_remote_command(f"display ont info by-sn {serial}")
-    return jsonify({"result": result})
-
-
-@app.route("/api/ont/diagnostics", methods=["POST"])
-def ont_diagnostics():
-    try:
-        data = request.get_json()
-        serial_number = data.get("serial", "").strip()
-        # Валидация на сервере
-        if not serial_number or not re.match(r"^[A-Za-z0-9]{8,16}$", serial_number):
-            return jsonify({"status": "error", "error": "Invalid serial number format"})
-        # Выполнение команды на оборудовании
-        result = execute_remote_command(
-            host="172.16.17.232", command=f"display ont info by-sn {serial_number}"
+        cmd = build_ping_cmd(host)
+        res = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding='utf-8',     # ключевая строка для кириллицы
+            errors='replace',     # опционально: не падать на некорректных байтах
+            timeout=6
         )
-        return jsonify({"status": "success", "serial": serial_number, "result": result})
-    except Exception as e:
-        return jsonify({"status": "error", "error": str(e)})
+        payload = {
+            'ok': res.returncode == 0,
+            'code': res.returncode,
+            'output': res.stdout or res.stderr
+        }
+        return payload, 200  # или jsonify(payload), если предпочитаете явный Response
 
+    except subprocess.TimeoutExpired as e:
+        return {'error': 'Таймаут выполнения', 'output': getattr(e, 'stdout', '')}, 504
+    except Exception as e:
+        return {'error': str(e)}, 500
 
 @app.route("/")
 @app.route("/home")
@@ -101,7 +105,6 @@ def home():
         "home.html", title="Выбери уровень поддержки", menu=current_menu
     )
 
-
 # маршруты для 1 линии
 @app.route("/level1")
 def level1():
@@ -110,7 +113,6 @@ def level1():
     return render_template(
         "level1.html", title="1 линия", menu=current_menu, contentmenu=level1menu
     )
-
 
 @app.route("/level1/diagnostics")
 def l1_diagnostics():
@@ -122,7 +124,6 @@ def l1_diagnostics():
         contentmenu=level1menu,
     )
 
-
 @app.route("/level1/pingtest")
 def l1_pingtest():
     current_menu = menu[0:8]
@@ -132,7 +133,6 @@ def l1_pingtest():
         menu=current_menu,
         contentmenu=level1menu,
     )
-
 
 @app.route("/level1/reboot")
 def l1_reboot():
@@ -144,7 +144,6 @@ def l1_reboot():
         contentmenu=level1menu,
     )
 
-
 # маршруты для 2 линии
 @app.route("/level2")
 def level2():
@@ -153,7 +152,6 @@ def level2():
     return render_template(
         "level2.html", title="2 линия", menu=current_menu, contentmenu=level2menu
     )
-
 
 @app.route("/level2/diagnostics")
 def l2_diagnostics():
@@ -167,7 +165,6 @@ def l2_diagnostics():
         contentmenu=level2menu,
     )
 
-
 @app.route("/level2/configuration")
 def configuration():
     # print(url_for("configuration"))
@@ -179,7 +176,6 @@ def configuration():
         contentmenu=level2menu,
     )
 
-
 @app.route("/level2/remote")
 def remote():
     # print(url_for("remote"))
@@ -188,13 +184,11 @@ def remote():
         "level2/l2_remote.html", title="Удалённая помощь", menu=current_menu
     )
 
-
 @app.route("/level3")
 def level3():
     # print(url_for("level3"))
     current_menu = menu[0:8]
     return render_template("level3.html", title="3 линия", menu=current_menu)
-
 
 @app.route("/help")
 def help():
