@@ -25,6 +25,7 @@ PASSWORD = os.getenv("PASSWORD")
 app = Flask(__name__)
 app.json.ensure_ascii = False  # не экранировать кириллицу как \uXXXX
 app.json.mimetype = "application/json; charset=utf-8"
+
 app.config["SECRET_KEY"] = "fwlhflsiurghhgoliuharglih4liguhaol4"
 
 # Меню сайта
@@ -67,32 +68,28 @@ def build_ping_cmd(host: str):
         # Для простой совместимости используем -c и -W=1; при необходимости адаптируйте под конкретную ОС.
         return ['ping', '-c', '4', '-W', '1', host]
 
+def decode_bytes(b: bytes) -> str:
+    encs = (['cp866', 'utf-8', 'cp1251'] if os.name == 'nt' else ['utf-8'])
+    for e in encs:
+        try:
+            return b.decode(e)
+        except UnicodeDecodeError:
+            pass
+    return b.decode(encs[0], errors='replace')
+
 @app.post('/api/ping')
 def api_ping():
-    data = request.get_json(silent=True) or {}
-    host = (data.get('host') or '').strip()
-    if not host or not HOST_RE.match(host):
+    host = (request.get_json(silent=True) or {}).get('host', '').strip()
+    if not host:
         return {'error': 'Некорректный хост'}, 400
-
+    cmd = (['ping', '-n', '4', '-w', '1000', host] if os.name == 'nt'
+           else ['ping', '-c', '4', '-W', '1', host])
     try:
-        cmd = build_ping_cmd(host)
-        res = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding='utf-8',     # ключевая строка для кириллицы
-            errors='replace',     # опционально: не падать на некорректных байтах
-            timeout=6
-        )
-        payload = {
-            'ok': res.returncode == 0,
-            'code': res.returncode,
-            'output': res.stdout or res.stderr
-        }
-        return payload, 200  # или jsonify(payload), если предпочитаете явный Response
-
-    except subprocess.TimeoutExpired as e:
-        return {'error': 'Таймаут выполнения', 'output': getattr(e, 'stdout', '')}, 504
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=6)  # text=False
+        output = decode_bytes(res.stdout) or decode_bytes(res.stderr)
+        return {'ok': res.returncode == 0, 'code': res.returncode, 'output': output.replace('\r\n', '\n')}, 200
+    except subprocess.TimeoutExpired:
+        return {'error': 'Таймаут выполнения'}, 504
     except Exception as e:
         return {'error': str(e)}, 500
 
