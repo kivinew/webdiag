@@ -123,7 +123,7 @@ def l1_diagnostics():
         contentmenu=level1menu,
     )
 
-# @app.route("/level1/pingtest")
+@app.route("/level1/pingtest")
 def l1_pingtest():
     current_menu = menu[0:8]
     return render_template(

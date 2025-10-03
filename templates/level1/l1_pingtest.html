@@ -13,27 +13,27 @@
     <h2>Проверка доступности сети с терминала абонента</h2>
     <form id="terminalForm">
         <div class="form-group">
-            <label for="serialNumber">Хост/IP:</label>
+            <label for="requestData">Домен/IP:</label>
             <input
                 type="text"
-                id="serialNumber"
+                id="requestData"
                 name="host"
                 placeholder="например, 8.8.8.8 или example.com"
                 required
                 pattern="[A-Za-z0-9.-]{1,253}"
                 title="Допустимы буквы, цифры, точка и дефис (1–253 символа)">
-            <button type="button" class="btn-check" onclick="runDiagnostics()">Пинг</button>
+            <button type="button" class="btn-check" onclick="runDiagnostics()">проверить связь</button>
         </div>
     </form>
 
     <div class="result-container" id="resultContainer" style="display: none;">
-        <h3>Результаты:</h3>
+        <h3>Результат:</h3>
         <div class="result-field">
-            <span class="field-label">Хост/IP:</span>
+            <!-- <span class="field-label">Хост/IP:</span> -->
             <span id="resultSerial" class="field-value"></span>
         </div>
         <div class="result-field">
-            <span class="field-label">Описание:</span>
+            <!-- <span class="field-label">Описание:</span> -->
             <span id="resultDescription" class="field-value"></span>
         </div>
         <div class="result-field">
@@ -46,39 +46,40 @@
 {% block scripts %}
 <script>
 async function runDiagnostics() {
-    const input = document.getElementById('serialNumber');
-    const host = input.value.trim();
-    const container = document.getElementById('resultContainer');
-    const outHost = document.getElementById('resultSerial');
-    const outDesc = document.getElementById('resultDescription');
-    const outStatus = document.getElementById('resultOnt');
+  const input = document.getElementById('requestData');
+  const container = document.getElementById('resultContainer');
+  const outHost = document.getElementById('resultSerial');
+  const outDesc = document.getElementById('resultDescription');
+  const outStatus = document.getElementById('resultOnt');
+  const btn = document.querySelector('.btn-check');
 
-    if (!host) {
-        container.style.display = 'block';
-        outHost.textContent = '';
-        outStatus.textContent = 'Некорректный ввод';
-        outDesc.textContent = 'Укажите хост или IP-адрес';
-        return;
+  if (!input.checkValidity()) { input.reportValidity(); return; }
+  const host = input.value.trim();
+
+  container.style.display = 'block';
+  outHost.textContent = host;
+  outStatus.textContent = 'Выполняется...';
+  outDesc.textContent = '';
+
+  try {
+    btn.disabled = true;
+    const resp = await fetch('/api/ping', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ host })
+    });
+    if (!resp.ok) {
+      throw new Error('HTTP ' + resp.status);
     }
-
-    container.style.display = 'block';
-    outHost.textContent = host;
-    outStatus.textContent = 'Выполняется...';
-    outDesc.textContent = '';
-
-    try {
-        const resp = await fetch('/api/ping', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ host })
-        });
-        const data = await resp.json();
-        outStatus.textContent = data.ok ? 'OK' : 'FAIL';
-        outDesc.textContent = data.output || data.error || 'Нет данных';
-    } catch (e) {
-        outStatus.textContent = 'Ошибка';
-        outDesc.textContent = 'Ошибка запроса: ' + e;
-    }
+    const data = await resp.json();
+    outStatus.textContent = data.ok ? 'OK' : 'FAIL';
+    outDesc.textContent = (data.output || data.error || 'Нет данных').replace(/\r\n|\r/g, '\n');
+  } catch (e) {
+    outStatus.textContent = 'Ошибка';
+    outDesc.textContent = 'Ошибка запроса: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
 }
 </script>
 {% endblock %}
