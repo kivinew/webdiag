@@ -1,6 +1,87 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/levels.css') }}">
+    <style>#resultDescription{white-space:pre-wrap;}</style>
+{% endblock %}
+
 {% block content %}
 {{ super() }}
+
+<div class="diagnostics">
+    <h2>Проверка доступности сети с терминала абонента</h2>
+    <form id="terminalForm">
+        <div class="form-group">
+            <label for="requestData">Домен/IP:</label>
+            <input
+                type="text"
+                id="requestData"
+                name="host"
+                placeholder="например, 8.8.8.8 или example.com"
+                required
+                pattern="[A-Za-z0-9.-]{1,253}"
+                title="Допустимы буквы, цифры, точка и дефис (1–253 символа)">
+            <button type="button" class="btn-check" onclick="runDiagnostics()">проверить связь</button>
+        </div>
+    </form>
+
+    <div class="result-container" id="resultContainer" style="display: none;">
+        <h3>Результат:</h3>
+        <div class="result-field">
+            <!-- <span class="field-label">Хост/IP:</span> -->
+            <span id="resultSerial" class="field-value"></span>
+        </div>
+        <div class="result-field">
+            <!-- <span class="field-label">Описание:</span> -->
+            <span id="resultDescription" class="field-value"></span>
+        </div>
+        <div class="result-field">
+            <span class="field-label">Статус пинга:</span>
+            <span id="resultOnt" class="field-value"></span>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+async function runDiagnostics() {
+  const input = document.getElementById('requestData');
+  const container = document.getElementById('resultContainer');
+  const outHost = document.getElementById('resultSerial');
+  const outDesc = document.getElementById('resultDescription');
+  const outStatus = document.getElementById('resultOnt');
+  const btn = document.querySelector('.btn-check');
+
+  if (!input.checkValidity()) { input.reportValidity(); return; }
+  const host = input.value.trim();
+
+  container.style.display = 'block';
+  outHost.textContent = host;
+  outStatus.textContent = 'Выполняется...';
+  outDesc.textContent = '';
+
+  try {
+    btn.disabled = true;
+    const resp = await fetch('/api/ping', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ host })
+    });
+    if (!resp.ok) {
+      throw new Error('HTTP ' + resp.status);
+    }
+    const data = await resp.json();
+    outStatus.textContent = data.ok ? 'OK' : 'FAIL';
+    outDesc.textContent = (data.output || data.error || 'Нет данных').replace(/\r\n|\r/g, '\n');
+  } catch (e) {
+    outStatus.textContent = 'Ошибка';
+    outDesc.textContent = 'Ошибка запроса: ' + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+{% endblock %}
 
 {% endblock %}

@@ -3,6 +3,7 @@ venv/
 .vscode/
 __pycache__/
 WD_server.log.ssh/
+.env
 nohup.out
 .gitconfig
 .viminfo
