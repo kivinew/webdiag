@@ -2,11 +2,9 @@
 #
 
 from dotenv import load_dotenv
-import subprocess
-import sys
-import os
-import re
-import paramiko
+import os, time
+import asyncio
+import telnetlib3, threading, re
 from flask import (
     Flask,
     render_template,
@@ -15,16 +13,16 @@ from flask import (
     flash,
     session,
     redirect,
-    jsonify,
 )
 
 load_dotenv()
+OLT_IP = "172.16.17.232"
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
 
 app = Flask(__name__)
-app.json.ensure_ascii = False  # не экранировать кириллицу как \uXXXX
-app.json.mimetype = "application/json; charset=utf-8"
+# app.json.ensure_ascii = False  # не экранировать кириллицу как \uXXXX
+# app.json.mimetype = "application/json; charset=utf-8"
 
 app.config["SECRET_KEY"] = "fwlhflsiurghhgoliuharglih4liguhaol4"
 
@@ -61,15 +59,6 @@ level3menu = [{""""""}]
 
 HOST_RE = re.compile(r'^[A-Za-z0-9.-]{1,253}$')
 
-def build_ping_cmd(host: str):
-    if os.name == 'nt':
-        # Windows: -n (count), -w (timeout ms)
-        return ['ping', '-n', '4', '-w', '1000', host]
-    else:
-        # Linux/macOS: -c (count), -W (timeout s on Linux; macOS использует -W в секундах для "ttl expired", -t/-W отличаются между платформами)
-        # Для простой совместимости используем -c и -W=1; при необходимости адаптируйте под конкретную ОС.
-        return ['ping', '-c', '4', '-W', '1', host]
-
 def decode_bytes(b: bytes) -> str:
     encs = (['cp866', 'utf-8', 'cp1251'] if os.name == 'nt' else ['utf-8'])
     for e in encs:
@@ -79,21 +68,118 @@ def decode_bytes(b: bytes) -> str:
             pass
     return b.decode(encs[0], errors='replace')
 
+async def remote_ping_result(reader, timeout=12):
+    t0 = asyncio.get_event_loop().time()
+    lines = []
+    while asyncio.get_event_loop().time() - t0 < timeout:
+        line = await reader.readline()
+        if line:
+            lines.append(line.strip())
+            if 'ONT remote-ping information' in line:
+                lines += [(await reader.readline()).strip() for _ in range(13)]
+                return {'ok': True, 'output': '\n'.join(lines)}
+            if 'Failure:' in line:
+                return {'ok': False, 'output': '\n'.join(lines)}
+    return {'ok': False, 'output': 'Нет ping-вывода'}
+
+def query_station(host, serial):
+    res_data = {'ok': False, 'output': '', 'serialInfo': ''}
+    
+    def telnet_code():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        async def run_telnet():
+            
+            try:
+                print(f"[TELNET] Connecting to OLT {OLT_IP}...")
+                reader, writer = await telnetlib3.open_connection(
+                host=OLT_IP, 
+                port=23, 
+                encoding='utf-8'
+                )
+                
+                auth_log = []
+                # Пример логина. Подстройте под свою станцию!
+                print("[TELNET] Connected. Authorization...")
+                if reader and writer:
+                    auth_log.append(await reader.readuntil(b'name:'))
+                    # print("[TELNET]", auth_log[-1].strip())
+                    writer.write(f"{USERNAME}" + '\n')     # ваш логин
+                    auth_log.append(await reader.readuntil(b'password:'))
+                    # print("[TELNET]", auth_log[-1].strip())
+                    writer.write(f"{PASSWORD}" + '\n')
+
+                    motd = await reader.readuntil(b'>')
+                    # print("[TELNET] MOTD/Prompt:\n", motd.strip())
+
+                    # Переход в enable/config
+                    writer.write('enable\n')
+                    _ = await reader.readuntil(b'#')
+                    writer.write('config\n')
+                    _ = await reader.readuntil(b'(config)#')
+
+                    print("[TELNET] AUTHORIZED!")
+
+                    # Теперь искать ONT
+                    writer.write(f'display ont info by-sn {serial}\n')
+                    writer.write('q\n')
+                    time.sleep(2)
+                    ont_out = await reader.readuntil(b') ----')
+                    # time.sleep(2)
+                    out_str = ont_out.decode('utf-8', errors='replace').strip()
+                    # print('[TELNET] Output:\n', ont_out)
+                
+                    pattern = r'F/S/P\s*:\s*(\d+)/(\d+)/(\d+)\s+ONT-ID\s*:\s*(\d+)'
+                    match = re.search(pattern, out_str.replace('\r', ''))
+
+                    if not match:
+                        res_data['output'] = 'ONT не найден'
+                        print('[TELNET] ONT не найден')
+                        writer.close()
+                        await writer.wait_closed()
+                        return
+
+                    frame, slot, port, ont = match.group(1), match.group(2), match.group(3), match.group(4)
+                    print('[TELNET] Frame:', frame, 'Slot:', slot, 'Port:', port, 'Ont:', ont)
+                    res_data['serialInfo'] = f'{frame}/{slot}/{port}/{ont}'
+
+                    # writer.write(f"interface gpon {frame}/{slot}\n")
+                    writer.write(f'interface gpon {frame}/{slot}\nont remote-ping {port} {ont} ip-address {host}\nq\n')
+                    time.sleep(10)
+                    ping_out = await remote_ping_result(reader)
+                    # ping_out = await reader.readuntil(b"Failure")
+                    time.sleep(5)
+
+                    print('[TELNET] PING output:\n', ping_out)
+
+                    res_data['ok'] = ('TTL' in str(ping_out))
+                    res_data['output'] = ping_out
+
+                    writer.close()
+                    await writer.wait_closed()
+                    print('[TELNET] Connection closed.')
+
+            except Exception as e:
+                print(f'[TELNET][ERROR] {str(e)}')
+                res_data['output'] = f'Ошибка telnet: {e}'
+
+            
+        loop.run_until_complete(run_telnet())
+    t = threading.Thread(target=telnet_code)
+    t.start()
+    t.join(timeout=15)
+    return res_data
+
 @app.post('/api/ping')
 def api_ping():
-    host = (request.get_json(silent=True) or {}).get('host', '').strip()
-    if not host:
-        return {'error': 'Некорректный хост'}, 400
-    cmd = (['ping', '-n', '4', '-w', '1000', host] if os.name == 'nt'
-           else ['ping', '-c', '4', '-W', '1', host])
-    try:
-        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=6)  # text=False
-        output = decode_bytes(res.stdout) or decode_bytes(res.stderr)
-        return {'ok': res.returncode == 0, 'code': res.returncode, 'output': output.replace('\r\n', '\n')}, 200
-    except subprocess.TimeoutExpired:
-        return {'error': 'Таймаут выполнения'}, 504
-    except Exception as e:
-        return {'error': str(e)}, 500
+    data = request.get_json(silent=True) or {}
+    host = data.get('host', '').strip()
+    serial = data.get('serial', '').strip()
+    if not host or not serial:
+        return {'error': 'нужно указать оба поля'}, 400
+    res = query_station(host, serial)
+    return res, 200
 
 @app.route("/")
 @app.route("/home")

@@ -3,7 +3,19 @@
 {% block styles %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/levels.css') }}">
-    <style>#resultDescription{white-space:pre-wrap;}</style>
+    <style>
+        #resultDescription { white-space: pre-wrap; }
+        .status-ok { color: #2b9e43; font-weight: bold; }
+        .status-fail { color: #c92332; font-weight: bold; }
+        .loader {
+            display: inline-block;
+            width: 20px; height: 20px;
+            border: 2px solid #999; border-top: 2px solid #eee;
+            border-radius: 50%; animation: spin 1s linear infinite; vertical-align: middle;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @media (max-width: 700px) { .diagnostics { padding: 8px; font-size: 1em; } }
+    </style>
 {% endblock %}
 
 {% block content %}
@@ -11,77 +23,108 @@
 
 <div class="diagnostics">
     <h2>Проверка доступности сети с терминала абонента</h2>
-    <form id="terminalForm">
+    <form id="terminalForm" onsubmit="runDiagnostics(); return false;">
         <div class="form-group">
-            <label for="requestData">Домен/IP:</label>
-            <input
-                type="text"
-                id="requestData"
-                name="host"
-                placeholder="например, 8.8.8.8 или example.com"
-                required
-                pattern="[A-Za-z0-9.-]{1,253}"
-                title="Допустимы буквы, цифры, точка и дефис (1–253 символа)">
-            <button type="button" class="btn-check" onclick="runDiagnostics()">проверить связь</button>
+            <label>
+                Серийный номер ONT:
+                <input class="serialInput"
+                    type="text"
+                    name="serial"
+                    placeholder="4857544312345678"
+                    required
+                    pattern="[A-Za-z0-9]{8,16}"
+                    autocomplete="on"
+                    title="8–16 символов: буквы или цифры">
+            </label>
+            <label>
+                Домен/IP:
+                <input class="requestData"
+                    id="requestData"
+                    type="text"
+                    name="host"
+                    placeholder="например, 8.8.8.8 или example.com"
+                    required
+                    pattern="[A-Za-z0-9.-]{1,253}"
+                    autocomplete="on"
+                    title="Допустимы буквы, цифры, точка и дефис (1–253 символа)">
+            </label>
+        </div>
+        <div style="margin-top: 8px;">
+            <button type="submit" class="btn-check">Проверить связь</button>
+            <button type="button" onclick="clearForm()" class="btn-clear">Очистить</button>
         </div>
     </form>
 
-    <div class="result-container" id="resultContainer" style="display: none;">
+    <div class="result-container" id="resultContainer" style="display:none;">
         <h3>Результат:</h3>
         <div class="result-field">
-            <!-- <span class="field-label">Хост/IP:</span> -->
             <span id="resultSerial" class="field-value"></span>
         </div>
         <div class="result-field">
-            <!-- <span class="field-label">Описание:</span> -->
             <span id="resultDescription" class="field-value"></span>
         </div>
         <div class="result-field">
-            <span class="field-label">Статус пинга:</span>
+            <span class="field-label">Доступ в интернет:</span>
             <span id="resultOnt" class="field-value"></span>
         </div>
+        <button type="button" style="margin-top:8px" onclick="copyResult()">Копировать результат</button>
     </div>
 </div>
 
 {% block scripts %}
 <script>
+const form = document.getElementById('terminalForm');
+const serialInput = document.querySelector('.serialInput');
+const hostInput = document.getElementById('requestData');
+const resultContainer = document.getElementById('resultContainer');
+const resultSerial = document.getElementById('resultSerial');
+const resultDesc = document.getElementById('resultDescription');
+const resultOnt = document.getElementById('resultOnt');
+const btnCheck = document.querySelector('.btn-check');
+
+function clearForm() {
+    serialInput.value = '';
+    hostInput.value = '';
+    resultSerial.textContent = '';
+    resultDesc.textContent = '';
+    resultOnt.textContent = '';
+    resultContainer.style.display = 'none';
+}
+
+function copyResult() {
+    let txt = `Хост/IP: ${resultSerial.textContent}\nДоступ в интернет: ${resultOnt.textContent}\n${resultDesc.textContent}`;
+    navigator.clipboard.writeText(txt);
+}
+
 async function runDiagnostics() {
-  const input = document.getElementById('requestData');
-  const container = document.getElementById('resultContainer');
-  const outHost = document.getElementById('resultSerial');
-  const outDesc = document.getElementById('resultDescription');
-  const outStatus = document.getElementById('resultOnt');
-  const btn = document.querySelector('.btn-check');
+    if (!form.reportValidity()) return;
+    const serial = serialInput.value.trim();
+    const host = hostInput.value.trim();
+    resultContainer.style.display = 'block';
+    resultSerial.textContent = host;
+    resultOnt.innerHTML = '<span class="loader"></span> Выполняется...';
+    resultDesc.textContent = '';
 
-  if (!input.checkValidity()) { input.reportValidity(); return; }
-  const host = input.value.trim();
-
-  container.style.display = 'block';
-  outHost.textContent = host;
-  outStatus.textContent = 'Выполняется...';
-  outDesc.textContent = '';
-
-  try {
-    btn.disabled = true;
-    const resp = await fetch('/api/ping', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ host })
-    });
-    if (!resp.ok) {
-      throw new Error('HTTP ' + resp.status);
+    btnCheck.disabled = true;
+    try {
+        const resp = await fetch('/api/ping', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ host, serial })
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        resultOnt.textContent = data.ok ? 'OK' : 'FAIL';
+        resultOnt.className = data.ok ? 'status-ok' : 'status-fail';
+        resultDesc.textContent = (data.output || data.error || 'Нет данных').replace(/\r\n|\r/g, '\n');
+    } catch (e) {
+        resultOnt.textContent = 'Ошибка';
+        resultOnt.className = 'status-fail';
+        resultDesc.textContent = 'Ошибка запроса: ' + e.message;
+    } finally {
+        btnCheck.disabled = false;
     }
-    const data = await resp.json();
-    outStatus.textContent = data.ok ? 'OK' : 'FAIL';
-    outDesc.textContent = (data.output || data.error || 'Нет данных').replace(/\r\n|\r/g, '\n');
-  } catch (e) {
-    outStatus.textContent = 'Ошибка';
-    outDesc.textContent = 'Ошибка запроса: ' + e.message;
-  } finally {
-    btn.disabled = false;
-  }
 }
 </script>
 {% endblock %}
-
 {% endblock %}
