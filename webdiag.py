@@ -1,10 +1,12 @@
 # TODO:
-#
+# 1 - определение IP станции
+# 2 - пинг с терминала по серийнику, ЛС
 
 from dotenv import load_dotenv
 import os, time
 import asyncio
 import telnetlib3, threading, re
+from switches import HUAWEI_OLT
 from flask import (
     Flask,
     render_template,
@@ -68,21 +70,34 @@ def decode_bytes(b: bytes) -> str:
             pass
     return b.decode(encs[0], errors='replace')
 
-async def remote_ping_result(reader, timeout=12):
+async def remote_ping_wait(reader, timeout=20):
     t0 = asyncio.get_event_loop().time()
     lines = []
     while asyncio.get_event_loop().time() - t0 < timeout:
         line = await reader.readline()
         if line:
             lines.append(line.strip())
-            if 'ONT remote-ping information' in line:
-                lines += [(await reader.readline()).strip() for _ in range(13)]
-                return {'ok': True, 'output': '\n'.join(lines)}
-            if 'Failure:' in line:
-                return {'ok': False, 'output': '\n'.join(lines)}
-    return {'ok': False, 'output': 'Нет ping-вывода'}
+            if 'ONT remote-ping information' in line or 'Failure:' in line:
+                extra = []
+                if 'ONT remote-ping information' in line:
+                    extra = [(await reader.readline()).strip() for _ in range(12)]
+                raw = "\n".join(lines + extra)
+                ip = re.search(r'IP address of ping\s*:\s*([\d.]+)', raw)
+                recv = re.search(r'Receive packets\s*:\s*(\d+)', raw)
+                lost = re.search(r'Lost packets\s*:\s*(\d+)', raw)
+                received = int(recv.group(1)) if recv else 0
+                lost_packets = int(lost.group(1)) if lost else -1
+                ok = (received > 0) and (lost_packets == 0) and ('Failure:' not in line)
+                return {
+                    'ok': ok,
+                    'ip': ip.group(1) if ip else None,
+                    'received': received,
+                    'lost': lost_packets,
+                    'output': raw
+                }
+    return {'ok': False, 'ip': None, 'received': 0, 'lost': -1, 'output': 'Нет результата (таймаут)'}
 
-def query_station(host, serial):
+def query_station(host, serial, olt_ip):
     res_data = {'ok': False, 'output': '', 'serialInfo': ''}
     
     def telnet_code():
@@ -92,9 +107,9 @@ def query_station(host, serial):
         async def run_telnet():
             
             try:
-                print(f"[TELNET] Connecting to OLT {OLT_IP}...")
+                print(f"[TELNET] Connecting to OLT {olt_ip}...")
                 reader, writer = await telnetlib3.open_connection(
-                host=OLT_IP, 
+                olt_ip, 
                 port=23, 
                 encoding='utf-8'
                 )
@@ -141,21 +156,19 @@ def query_station(host, serial):
                         return
 
                     frame, slot, port, ont = match.group(1), match.group(2), match.group(3), match.group(4)
-                    print('[TELNET] Frame:', frame, 'Slot:', slot, 'Port:', port, 'Ont:', ont)
                     res_data['serialInfo'] = f'{frame}/{slot}/{port}/{ont}'
+                    print(f"{res_data['serialInfo']}")
 
-                    # writer.write(f"interface gpon {frame}/{slot}\n")
                     writer.write(f'interface gpon {frame}/{slot}\nont remote-ping {port} {ont} ip-address {host}\nq\n')
-                    time.sleep(10)
-                    ping_out = await remote_ping_result(reader)
-                    # ping_out = await reader.readuntil(b"Failure")
                     time.sleep(5)
+                    
+                    ping_out = await remote_ping_wait(reader)
 
-                    print('[TELNET] PING output:\n', ping_out)
-
-                    res_data['ok'] = ('TTL' in str(ping_out))
+                    res_data['ok'] = ('Transmit packets' in str(ping_out))
                     res_data['output'] = ping_out
 
+                    print('[TELNET] PING output:\n', res_data)
+                    
                     writer.close()
                     await writer.wait_closed()
                     print('[TELNET] Connection closed.')
@@ -173,12 +186,14 @@ def query_station(host, serial):
 
 @app.post('/api/ping')
 def api_ping():
-    data = request.get_json(silent=True) or {}
-    host = data.get('host', '').strip()
-    serial = data.get('serial', '').strip()
-    if not host or not serial:
-        return {'error': 'нужно указать оба поля'}, 400
-    res = query_station(host, serial)
+    req = request.get_json(silent=True) or {}
+    host = req.get('host', '').strip()
+    serial = req.get('serial', '').strip()
+    olt_ip = req.get('olt_ip', '').strip()
+    # if not (host and serial and olt_ip):
+    #     return {'error': 'Необходимо заполнить все поля'}, 400
+    print(f'Получен olt_ip: "{olt_ip}"')    # <-- Debug!
+    res = query_station(host, serial, olt_ip)
     return res, 200
 
 @app.route("/")
@@ -216,7 +231,7 @@ def l1_pingtest():
         "level1/l1_pingtest.html",
         title="Проверка связи",
         menu=current_menu,
-        contentmenu=level1menu,
+        contentmenu=level1menu, HUAWEI_OLT = HUAWEI_OLT
     )
 
 @app.route("/level1/reboot")
@@ -281,7 +296,6 @@ def help():
     current_menu = menu[0:8]
     return render_template("help.html", title="Помощь", menu=current_menu)
 
-
 @app.route("/report", methods=["POST", "GET"])
 def report():
     if request.method == "POST":
@@ -296,7 +310,6 @@ def report():
         "report.html", title="Сообщите о проблеме", menu=current_menu
     )
 
-
 @app.route("/about")
 def about():
     # print(url_for("about"))
@@ -304,7 +317,6 @@ def about():
     return render_template(
         "about.html", title="Информация о портале", menu=current_menu
     )
-
 
 @app.route("/login", methods=["POST", "GET"])
 def login():
@@ -323,7 +335,6 @@ def login():
         "login.html", title="Авторизация на сайте", menu=current_menu
     )
 
-
 @app.errorhandler(404)
 def page_not_found(e):
     print(f"404 Error: {e}")
@@ -335,7 +346,6 @@ def page_not_found(e):
         image_path="/images/404.jpg",
         image_alt="Страница не найдена",
     ), 404
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=3000, debug=True)
