@@ -87,7 +87,7 @@ async def remote_ping_wait(reader, timeout=20):
                 lost = re.search(r'Lost packets\s*:\s*(\d+)', raw)
                 received = int(recv.group(1)) if recv else 0
                 lost_packets = int(lost.group(1)) if lost else -1
-                ok = (received > 0) and (lost_packets == 0) and ('Failure:' not in line)
+                ok = (received > 0) and (lost_packets < 2) and ('Failure:' not in line)
                 return {
                     'ok': ok,
                     'ip': ip.group(1) if ip else None,
