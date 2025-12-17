@@ -1,6 +1,7 @@
 # TODO:
 # 1 - определение IP станции
 # 2 - пинг с терминала по серийнику, ЛС
+# 3 - добавить рекомендацию для 1 линии: в случае успешной проверки связи, проверить состояние родительского контроля в биллинге
 
 from dotenv import load_dotenv
 import os, time
@@ -43,7 +44,6 @@ menu = [
 # Меню диагностики 1 линии
 level1menu = [
     {"name": "Диагностика терминала", "url": "/level1/diagnostics"},
-    {"name": "Проверка связи", "url": "/level1/pingtest"},
     {"name": "Перезагрузка терминала", "url": "/level1/reboot"},
 ]
 
@@ -70,7 +70,7 @@ def decode_bytes(b: bytes) -> str:
             pass
     return b.decode(encs[0], errors='replace')
 
-async def remote_ping_wait(reader, timeout=20):
+async def remote_ping_parse(reader, timeout=20):
     t0 = asyncio.get_event_loop().time()
     lines = []
     while asyncio.get_event_loop().time() - t0 < timeout:
@@ -100,20 +100,15 @@ async def remote_ping_wait(reader, timeout=20):
 def query_station(host, serial, olt_ip):
     res_data = {'ok': False, 'output': '', 'serialInfo': ''}
     
-    def telnet_code():
+    def remote_diagnose():
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         
         async def run_telnet():
             
+            print(f"[TELNET] Connecting to OLT {olt_ip}...")
+            reader, writer = await telnetlib3.open_connection(olt_ip, port=23, encoding='utf-8')
             try:
-                print(f"[TELNET] Connecting to OLT {olt_ip}...")
-                reader, writer = await telnetlib3.open_connection(
-                olt_ip, 
-                port=23, 
-                encoding='utf-8'
-                )
-                
                 auth_log = []
                 # Пример логина. Подстройте под свою станцию!
                 print("[TELNET] Connected. Authorization...")
@@ -162,24 +157,24 @@ def query_station(host, serial, olt_ip):
                     writer.write(f'interface gpon {frame}/{slot}\nont remote-ping {port} {ont} ip-address {host}\nq\n')
                     time.sleep(5)
                     
-                    ping_out = await remote_ping_wait(reader)
+                    ping_out = await remote_ping_parse(reader)
 
                     res_data['ok'] = ('Transmit packets' in str(ping_out))
                     res_data['output'] = ping_out
 
                     print('[TELNET] PING output:\n', res_data)
                     
-                    writer.close()
-                    await writer.wait_closed()
-                    print('[TELNET] Connection closed.')
-
             except Exception as e:
                 print(f'[TELNET][ERROR] {str(e)}')
                 res_data['output'] = f'Ошибка telnet: {e}'
 
+            finally:
+                if writer is not None:
+                    writer.close()
+                    await writer.wait_closed()
             
         loop.run_until_complete(run_telnet())
-    t = threading.Thread(target=telnet_code)
+    t = threading.Thread(target=remote_diagnose)
     t.start()
     t.join(timeout=15)
     return res_data
@@ -221,16 +216,6 @@ def l1_diagnostics():
         "level1/l1_diagnostics.html",
         title="Диагностика терминала",
         menu=current_menu,
-        contentmenu=level1menu,
-    )
-
-@app.route("/level1/pingtest")
-def l1_pingtest():
-    current_menu = menu[0:8]
-    return render_template(
-        "level1/l1_pingtest.html",
-        title="Проверка связи",
-        menu=current_menu,
         contentmenu=level1menu, HUAWEI_OLT = HUAWEI_OLT
     )
 
@@ -262,7 +247,7 @@ def l2_diagnostics():
         "level2/l2_diagnostics.html",
         title="Диагностика сети",
         menu=current_menu,
-        contentmenu=level2menu,
+        contentmenu=level2menu, HUAWEI_OLT = HUAWEI_OLT
     )
 
 @app.route("/level2/configuration")

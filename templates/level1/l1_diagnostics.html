@@ -9,30 +9,127 @@
 {{ super() }}
 
 <div class="diagnostics">
-    <h2>Диагностика терминала</h2>
-    <form id="terminalForm">
-        <div class="form-group">
-            <label for="serialNumber">Серийный номер:</label>
-            <input type="text" id="serialNumber" name="serialNumber" 
-                   placeholder="формат '4857544312345678'" required>
-            <button type="submit" class="btn-check">Проверить</button>
-        </div>
-    </form>
+  <div class="diag-layout">
+    <div class="diag-left">
+      <h4>Проверка работы сети</h4>
+      <div>Выбери головную станцию (населённый пункт), укажи серийный номер терминала из УУ</div>
+      <div>Нажми кнопку "Проверить сеть"</div>
+      <div>Ожидай результат проверки</div>
 
-    <div class="result-container" id="resultContainer" style="display: none;">
-        <h3>Результаты диагностики:</h3>
-        <div class="result-field">
-            <span class="field-label">Серийный номер:</span>
-            <span id="resultSerial" class="field-value"></span>
+      <form id="terminalForm" onsubmit="runDiagnostics(); return false;">
+        <div class="form-group">
+          <label for="oltSelect">Головная станция:</label>
+          <select id="oltSelect" name="olt">
+            {% for ip, name in HUAWEI_OLT.items() %}
+              <option value="{{ ip }}">{{ name }} ({{ ip }})</option>
+            {% endfor %}
+          </select>
         </div>
-        <div class="result-field">
-            <span class="field-label">Описание:</span>
-            <span id="resultDescription" class="field-value"></span>
+        <div class="form-group">
+          <label for="serialInput">Серийный номер ONT:</label>
+          <input class="serialInput"
+                 id="serialInput"
+                 type="text"
+                 name="serial"
+                 placeholder="4857544312345678"
+                 required
+                 pattern="[A-Za-z0-9]{8,16}"
+                 autocomplete="on" />
         </div>
-        <div class="result-field">
-            <span class="field-label">ONT статус:</span>
-            <span id="resultOnt" class="field-value"></span>
+        <div class="form-group ip-row">
+          <label for="requestData">IP-адрес:</label>
+          <div class="ip-controls">
+            <input class="requestData"
+                   id="requestData"
+                   type="text"
+                   name="host"
+                   placeholder="например, 8.8.8.8"
+                   required
+                   pattern="[-0-9.]{7,15}"
+                   autocomplete="on" />
+            <button type="submit" class="btn primary">Проверить связь</button>
+            <button type="button" onclick="clearForm()" class="btn secondary">Очистить</button>
+          </div>
         </div>
+      </form>
     </div>
+
+    <aside class="diag-right" id="resultContainer" style="display:none;">
+      <h4>Результат:</h4>
+      <div id="resultDescription" class="result-text"></div>
+      <div class="result-status">
+        <strong>Доступ в интернет:</strong>
+        <span id="resultOnt" class="status-ok"></span>
+      </div>
+      <button type="button" class="btn secondary full" onclick="copyResult()">Копировать результат</button>
+    </aside>
+  </div>
 </div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const form = document.getElementById('terminalForm');
+const serialInput = document.getElementById('serialInput');
+const hostInput = document.getElementById('requestData');
+const resultContainer = document.getElementById('resultContainer');
+const resultDesc = document.getElementById('resultDescription');
+const resultOnt = document.getElementById('resultOnt');
+const btnCheck = document.querySelector('.btn-check');
+
+function clearForm() {
+    serialInput.value = '';
+    hostInput.value = '';
+    resultDesc.textContent = '';
+    resultOnt.textContent = '';
+    resultContainer.style.display = 'none';
+}
+
+// При копировании забирает только видимые параметры:
+function copyResult() {
+    let txt = resultDesc.textContent + '\nДоступ в интернет: ' + resultOnt.textContent;
+    navigator.clipboard.writeText(txt);
+}
+
+async function runDiagnostics() {
+    if (!form.reportValidity()) return;
+    const serial = serialInput.value.trim();
+    const host = hostInput.value.trim();
+    resultContainer.style.display = 'block';
+    resultDesc.textContent = 'Выполняется...';
+    resultOnt.textContent = '';
+
+    btnCheck.disabled = true;
+    try {
+        const oltIp = document.getElementById('oltSelect').value;
+        const resp = await fetch('/api/ping', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ host, serial, olt_ip: oltIp })
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        // Если backend сразу возвращает корневые параметры (как рекомендовано) — используем их:
+        const ping = data.output || data;   // считает вложенность
+        const ip = (typeof ping.ip === 'string') ? ping.ip : '-';
+        const received = typeof ping.received === 'number' ? ping.received : Number(ping.received) || 0;
+        const lost = typeof ping.lost === 'number' ? ping.lost : Number(ping.lost) || '-';
+        const netstatus = (ping.ok && received > 0 && lost === 0) ? 'OK' : 'ОТСУТСТВУЕТ!';
+
+        resultDesc.textContent = `IP: ${ip} Получено: ${received} Потери: ${lost}`;
+        resultOnt.textContent = netstatus;
+        resultOnt.className = netstatus === 'OK' ? 'status-ok' : 'status-fail';
+
+
+    } catch (e) {
+        resultOnt.textContent = 'Ошибка';
+        resultOnt.className = 'status-fail';
+        resultDesc.textContent = 'Ошибка запроса: ' + e.message;
+    } finally {
+        btnCheck.disabled = false;
+    }
+}
+</script>
 {% endblock %}

@@ -2,49 +2,7 @@
 
 {% block styles %}
 {{ super() }}
-<style>
-    .diagnostics {
-        display: flex;
-        justify-content: space-between;
-        gap: 20px;
-        margin-top: 30px;
-    }
-    
-    .feature {
-        flex: 1;
-        min-width: 0;
-        background: #f8f9fa;
-        padding: 25px;
-        border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        text-align: center;
-        transition: transform 0.3s, box-shadow 0.3s;
-    }
-    
-    .feature:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    .feature a {
-        display: block;
-        color: #2c3e50;
-        text-decoration: none;
-        font-size: 18px;
-        font-weight: 500;
-        padding: 15px 0;
-    }
-    
-    .feature a:hover {
-        color: #3498db;
-    }
-    
-    @media (max-width: 768px) {
-        .diagnostics {
-            flex-direction: column;
-        }
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
@@ -53,14 +11,7 @@
     <div class="feature">
         <a href="{{ url_for('l1_diagnostics') }}">
             <h3>Диагностика</h3>
-            <p>Проверка состояния терминала и уровень сигнала</p>
-        </a>
-    </div>
-    
-    <div class="feature">
-        <a href="{{ url_for('l1_pingtest') }}">
-            <h3>Пинг</h3>
-            <p>Проверка наличия интернета на абонентском терминале</p>
+            <p>Проверка состояния терминала и работы интернета</p>
         </a>
     </div>
     

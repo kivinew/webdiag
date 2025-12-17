@@ -1,46 +1,151 @@
-/* Специфичные стили для страницы диагностики */
 .diagnostics {
-    background: #fff;
-    padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    max-width: 800px;
-    margin: 2rem auto;
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 24px 28px;
+  border-radius: 8px;
+  background: #f5fbff;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+  font-size: 15px;
+}
+
+/* две колонки: форма + правый блок */
+.diag-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+/* левая колонка с формой */
+.diag-left {
+  flex: 1 1 0;
+}
+
+/* правая колонка с результатом фиксированной ширины */
+.diag-right {
+  flex: 0 0 260px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+/* заголовки */
+.diag-left h4,
+.diag-right h4 {
+  margin: 0 0 10px;
+}
+
+/* строки формы */
+#terminalForm {
+  margin-top: 16px;
 }
 
 .form-group {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 1.5rem;
-    align-items: center;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
-.requestData {
-    flex: 1;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 6px;
-    font-size: 1rem;
+.form-group label {
+  flex: 0 0 180px;
+  font-weight: 500;
 }
 
-.btn-check {
-    padding: 12px 24px;
-    background-color: #2c3e50;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+/* селект и инпуты */
+.form-group select,
+.form-group input {
+  flex: 1 1 auto;
+  max-width: 380px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid #bcc9d6;
+  font-size: 14px;
 }
 
-.btn-check:hover {
-    background-color: #3498db;
+/* IP + кнопки в одну линию */
+.ip-row { align-items: flex-start; }
+
+.ip-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
 }
 
-.result-container {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background-color: #f8fafc;
-    border-radius: 8px;
-    border-left: 4px solid #3498db;
+.ip-controls input {
+  flex: 1 1 auto;
+}
+
+/* кнопки */
+.btn {
+  padding: 7px 14px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn.primary {
+  background: #1b6da8;
+  color: #fff;
+}
+
+.btn.primary:hover { background: #155683; }
+
+.btn.secondary {
+  background: #e3e9f0;
+  color: #243447;
+}
+
+.btn.secondary:hover { background: #d4dde8; }
+
+.btn.full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* текст результата */
+.result-text {
+  margin-bottom: 10px;
+  white-space: pre-line;
+}
+
+.result-status {
+  margin-top: 4px;
+}
+
+.status-ok   { color: #2b9e43; font-weight: bold; }
+.status-fail { color: #c92332; font-weight: bold; }
+
+/* адаптив – на узких экранах правая колонка уходит под форму */
+@media (max-width: 900px) {
+  .diag-layout {
+    flex-direction: column;
+  }
+  .diag-right {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .form-group label {
+    flex: 0 0 auto;
+  }
+  .form-group select,
+  .form-group input {
+    max-width: 100%;
+    width: 100%;
+  }
+  .ip-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ip-controls .btn {
+    width: 100%;
+  }
 }
