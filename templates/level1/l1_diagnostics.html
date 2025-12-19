@@ -3,6 +3,160 @@
 {% block styles %}
     {{ super() }}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/levels.css') }}">
+<style>
+    .diagnostics {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 24px 28px;
+        border-radius: 8px;
+        background: #f5fbff;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+        font-size: 15px;
+        }
+
+        /* две колонки: форма + правый блок */
+        .diag-layout {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        }
+
+        /* левая колонка с формой */
+        .diag-left {
+        flex: 1 1 0;
+        }
+
+        /* правая колонка с результатом фиксированной ширины */
+        .diag-right {
+        flex: 0 0 260px;
+        padding: 14px 16px;
+        border-radius: 6px;
+        background: #ffffff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* заголовки */
+        .diag-left h4,
+        .diag-right h4 {
+        margin: 0 0 10px;
+        }
+
+        /* строки формы */
+        #terminalForm {
+        margin-top: 16px;
+        }
+
+        .form-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+        }
+
+        .form-group label {
+        flex: 0 0 180px;
+        font-weight: 500;
+        }
+
+        /* селект и инпуты */
+        .form-group select,
+        .form-group input {
+        flex: 1 1 auto;
+        max-width: 380px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        border: 1px solid #bcc9d6;
+        font-size: 14px;
+        }
+
+        /* IP + кнопки в одну линию */
+        .ip-row { align-items: flex-start; }
+
+        .ip-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1 1 auto;
+        }
+
+        .ip-controls input {
+        flex: 1 1 auto;
+        }
+
+        /* кнопки */
+        .btn {
+        padding: 7px 14px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        }
+
+        .btn.primary {
+        background: #1b6da8;
+        color: #fff;
+        }
+
+        .btn.primary:hover { background: #155683; }
+
+        .btn.secondary {
+        background: #e3e9f0;
+        color: #243447;
+        }
+
+        .btn.secondary:hover { background: #d4dde8; }
+
+        .btn.full {
+        width: 100%;
+        margin-top: 10px;
+        }
+
+        /* текст результата */
+        .result-text {
+        margin-bottom: 10px;
+        white-space: pre-line;
+        }
+
+        .result-status {
+        margin-top: 4px;
+        }
+
+        .status-ok   { color: #2b9e43; font-weight: bold; }
+        .status-fail { color: #c92332; font-weight: bold; }
+
+        /* адаптив – на узких экранах правая колонка уходит под форму */
+        @media (max-width: 900px) {
+        .diag-layout {
+            flex-direction: column;
+        }
+        .diag-right {
+            width: 100%;
+            flex: 0 0 auto;
+        }
+        .form-group {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .form-group label {
+            flex: 0 0 auto;
+        }
+        .form-group select,
+        .form-group input {
+            max-width: 100%;
+            width: 100%;
+        }
+        .ip-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .ip-controls .btn {
+            width: 100%;
+        }
+    }
+
+</style>
 {% endblock %}
 
 {% block content %}
@@ -45,9 +199,9 @@
                    name="host"
                    placeholder="например, 8.8.8.8"
                    required
-                   pattern="[-0-9.]{7,15}"
+                   pattern="[0-9.-]{7,15}"
                    autocomplete="on" />
-            <button type="submit" class="btn primary">Проверить связь</button>
+            <button type="submit" class="btn-check">Проверить связь</button>
             <button type="button" onclick="clearForm()" class="btn secondary">Очистить</button>
           </div>
         </div>
@@ -65,7 +219,6 @@
     </aside>
   </div>
 </div>
-
 
 {% endblock %}
 
@@ -98,7 +251,7 @@ async function runDiagnostics() {
     const serial = serialInput.value.trim();
     const host = hostInput.value.trim();
     resultContainer.style.display = 'block';
-    resultDesc.textContent = 'Выполняется...';
+    resultDesc.textContent = 'Выполняется проверка...';
     resultOnt.textContent = '';
 
     btnCheck.disabled = true;

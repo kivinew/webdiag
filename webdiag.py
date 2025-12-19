@@ -38,7 +38,6 @@ menu = [
     {"name": "Войти", "url": "/login"},
     {"name": "Помощь", "url": "/help"},
     {"name": "Сообщить о проблеме", "url": "/report"},
-    {"name": "О портале", "url": "/about"},
 ]
 
 # Меню диагностики 1 линии
@@ -293,14 +292,6 @@ def report():
     current_menu = menu[0:8]
     return render_template(
         "report.html", title="Сообщите о проблеме", menu=current_menu
-    )
-
-@app.route("/about")
-def about():
-    # print(url_for("about"))
-    current_menu = menu[0:8]
-    return render_template(
-        "about.html", title="Информация о портале", menu=current_menu
     )
 
 @app.route("/login", methods=["POST", "GET"])
