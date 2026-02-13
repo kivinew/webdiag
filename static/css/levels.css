@@ -149,3 +149,36 @@
     width: 100%;
   }
 }
+
+.btn-primary {
+    padding: 8px 22px;
+    border: none;
+    border-radius: 4px;
+    background: #1b6da8;          /* основной синий */
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+    transition:
+        background-color 0.15s ease,
+        transform 0.08s ease,
+        box-shadow 0.15s ease;
+}
+
+.btn-primary:hover {
+    background: #155683;          /* чуть темнее при наведении */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+
+.btn-primary:disabled {
+    background: #9cb8cf;
+    cursor: default;
+    box-shadow: none;
+}

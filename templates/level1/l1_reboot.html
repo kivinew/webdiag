@@ -1,6 +1,48 @@
 {% extends 'base.html' %}
 
+{% block styles %}
+    {{ super() }}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/levels.css') }}">
+{% endblock %}
+
 {% block content %}
 {{ super() }}
 
+<main class="container">
+  <section class="diag-left">
+    <h2>Перезагрузка терминала</h2>
+
+    <form id="rebootForm" onsubmit="event.preventDefault(); runReboot();">
+        <label for="serial">Серийный номер ONU</label>
+        <input id="serial" name="serial" required>
+
+        <label for="oltSelect">OLT</label>
+        <label for="oltSelect">Головная станция:</label>
+        <select id="oltSelect" name="olt">
+        {% for ip, name in HUAWEI_OLT.items() %}
+            <option value="{{ ip }}">{{ name }} ({{ ip }})</option>
+        {% endfor %}
+        </select>
+
+    <button type="submit" id="btnReboot" class="btn primary full">
+        Перезагрузить терминал
+    </button>
+    <button type="button" id="copyBtn" class="btn secondary full" onclick="copyResult()" disabled>
+        Копировать результат
+    </button>
+    </form>
+  </section>
+
+  <aside class="diag-right" id="resultContainer" style="display:none;">
+    <h4>Результат:</h4>
+    <div id="resultDescription" class="result-text"></div>
+    <div class="result-status">
+      <strong>Статус операции:</strong>
+      <span id="resultOnt" class="status-ok"></span>
+    </div>
+  </aside>
+</main>
+{% endblock %}
+{% block scripts %}
+    <script src="{{ url_for('static', filename='level1/reboot.js') }}"></script>
 {% endblock %}

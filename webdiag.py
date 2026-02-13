@@ -16,16 +16,14 @@ from flask import (
     flash,
     session,
     redirect,
+    jsonify
 )
 
 load_dotenv()
-OLT_IP = "172.16.17.232"
 USERNAME = os.getenv("USERNAME")
 PASSWORD = os.getenv("PASSWORD")
 
 app = Flask(__name__)
-# app.json.ensure_ascii = False  # не экранировать кириллицу как \uXXXX
-# app.json.mimetype = "application/json; charset=utf-8"
 
 app.config["SECRET_KEY"] = "fwlhflsiurghhgoliuharglih4liguhaol4"
 
@@ -190,6 +188,11 @@ def api_ping():
     res = query_station(host, serial, olt_ip)
     return res, 200
 
+@app.route('/reboot')
+def reboot_page():
+    # olts — как и для диагностики
+    return render_template('reboot.html')
+
 @app.route("/")
 @app.route("/home")
 def home():
@@ -225,7 +228,7 @@ def l1_reboot():
         "level1/l1_reboot.html",
         title="Перезагрузка терминала",
         menu=current_menu,
-        contentmenu=level1menu,
+        contentmenu=level1menu, HUAWEI_OLT = HUAWEI_OLT
     )
 
 # маршруты для 2 линии
@@ -241,7 +244,6 @@ def level2():
 def l2_diagnostics():
     # print(url_for("l2_diagnostics"))
     current_menu = menu[0:8]
-    level2menu
     return render_template(
         "level2/l2_diagnostics.html",
         title="Диагностика сети",
