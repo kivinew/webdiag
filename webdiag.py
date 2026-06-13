@@ -15,8 +15,7 @@ from flask import (
     request,
     flash,
     session,
-    redirect,
-    jsonify
+    redirect
 )
 
 load_dotenv()
@@ -131,7 +130,7 @@ def query_station(host, serial, olt_ip):
                     # Теперь искать ONT
                     writer.write(f'display ont info by-sn {serial}\n')
                     writer.write('q\n')
-                    time.sleep(2)
+                    await asyncio.sleep(2)
                     ont_out = await reader.readuntil(b') ----')
                     # time.sleep(2)
                     out_str = ont_out.decode('utf-8', errors='replace').strip()
@@ -152,7 +151,7 @@ def query_station(host, serial, olt_ip):
                     print(f"{res_data['serialInfo']}")
 
                     writer.write(f'interface gpon {frame}/{slot}\nont remote-ping {port} {ont} ip-address {host}\nq\n')
-                    time.sleep(5)
+                    await asyncio.sleep(5)
                     
                     ping_out = await remote_ping_parse(reader)
 
